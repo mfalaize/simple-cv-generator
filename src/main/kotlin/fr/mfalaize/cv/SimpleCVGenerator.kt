@@ -5,6 +5,7 @@ import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
 import org.apache.velocity.exception.ResourceNotFoundException
 import org.apache.velocity.runtime.RuntimeConstants
+import org.apache.velocity.runtime.log.NullLogChute
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader
 import org.xhtmlrenderer.pdf.ITextRenderer
 import org.xhtmlrenderer.resource.XMLResource
@@ -80,12 +81,13 @@ fun mergeTemplate(themePath: String, parsedYaml: Map<*, *>): String {
     val propsClasspath = Properties()
     propsClasspath.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath")
     propsClasspath.setProperty("classpath.resource.loader.class", ClasspathResourceLoader::class.java.canonicalName)
+    // Deactivate velocity logs to make sure no logs will output if classpath resource is not found
+    propsClasspath.setProperty(RuntimeConstants.RUNTIME_LOG_LOGSYSTEM_CLASS, NullLogChute::class.java.canonicalName)
     templateClasspathEngine.init(propsClasspath)
 
     val template = try {
         templateClasspathEngine.getTemplate(themePath, Charsets.UTF_8.name())
     } catch (ex: ResourceNotFoundException) {
-        ex.printStackTrace()
         // If not found, we try to get template from filepath
         val templateFileEngine = VelocityEngine()
         templateFileEngine.init()
